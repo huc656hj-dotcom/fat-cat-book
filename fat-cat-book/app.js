@@ -3,8 +3,7 @@
 const pages = [
   { label: "Cover", src: "assets/cover.png" },
   { label: "Project Statement", src: "assets/p01.png" },
-  { label: "How the Cat Works", src: "assets/p02.png" },
-  { label: "Index", src: "assets/p03.png" },
+  { label: "Index", src: "assets/p01.png" },
   // ... add more
   // { label: "No.01–No.10", src: "assets/p04.png" },
 ];
@@ -160,3 +159,4 @@ book.addEventListener("touchend", (e) => {
 // Init
 buildTOC();
 renderCurrent();
+
