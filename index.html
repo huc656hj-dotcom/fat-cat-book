@@ -12,23 +12,24 @@
       <span class="dot"></span>
       <span class="title">The Fat Cat Manual</span>
     </div>
-    <div class="page-indicator" id="pageIndicator">Cover</div>
+    <div class="page-indicator" id="pageIndicator">Loading…</div>
   </header>
 
   <main class="stage">
-    <button class="nav left" id="prevBtn" aria-label="Previous page">‹</button>
+    <button class="nav left" id="prevBtn" aria-label="Previous">‹</button>
 
-    <section class="book" aria-label="Flipbook">
-      <!-- Two layers: current + next to fake page flip -->
-      <div class="page current" id="currentPage">
-        <img id="currentImg" alt="Current page" />
+    <section class="book" id="book" aria-label="Flipbook">
+      <!-- Spread container (left + right). In portrait, left is hidden by CSS -->
+      <div class="spread" id="spread">
+        <div class="sheet left">
+          <img id="leftImg" alt="Left page" />
+        </div>
+        <div class="sheet right">
+          <img id="rightImg" alt="Right page" />
+        </div>
       </div>
 
-      <div class="page next" id="nextPage" aria-hidden="true">
-        <img id="nextImg" alt="" />
-      </div>
-
-      <!-- Flip overlay -->
+      <!-- Flip layer only covers the right side in landscape (via CSS) -->
       <div class="flip" id="flipLayer" aria-hidden="true">
         <div class="flip-face front">
           <img id="flipFrontImg" alt="" />
@@ -36,10 +37,11 @@
         <div class="flip-face back">
           <img id="flipBackImg" alt="" />
         </div>
+        <div class="flip-shadow" aria-hidden="true"></div>
       </div>
     </section>
 
-    <button class="nav right" id="nextBtn" aria-label="Next page">›</button>
+    <button class="nav right" id="nextBtn" aria-label="Next">›</button>
   </main>
 
   <footer class="bottombar">
@@ -47,7 +49,6 @@
     <button class="btn" id="fullscreenBtn">Full Screen</button>
   </footer>
 
-  <!-- simple TOC modal -->
   <dialog class="modal" id="tocModal">
     <div class="modal-head">
       <div class="modal-title">Index</div>
