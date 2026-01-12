@@ -12,36 +12,22 @@
       <span class="dot"></span>
       <span class="title">The Fat Cat Manual</span>
     </div>
-    <div class="page-indicator" id="pageIndicator">Loading…</div>
+    <div class="page-indicator" id="pageIndicator">Cover</div>
   </header>
 
   <main class="stage">
-    <button class="nav left" id="prevBtn" aria-label="Previous">‹</button>
+    <button class="nav left" id="prevBtn" aria-label="Previous page">‹</button>
 
-    <section class="book" id="book" aria-label="Flipbook">
-      <!-- Spread container (left + right). In portrait, left is hidden by CSS -->
-      <div class="spread" id="spread">
-        <div class="sheet left">
-          <img id="leftImg" alt="Left page" />
-        </div>
-        <div class="sheet right">
-          <img id="rightImg" alt="Right page" />
-        </div>
-      </div>
-
-      <!-- Flip layer only covers the right side in landscape (via CSS) -->
-      <div class="flip" id="flipLayer" aria-hidden="true">
-        <div class="flip-face front">
-          <img id="flipFrontImg" alt="" />
-        </div>
-        <div class="flip-face back">
-          <img id="flipBackImg" alt="" />
-        </div>
-        <div class="flip-shadow" aria-hidden="true"></div>
+    <section class="book" aria-label="Flipbook">
+      <div class="page" id="pageA"><img /></div>
+      <div class="page" id="pageB"><img /></div>
+      <div class="flip" id="flipLayer">
+        <div class="paper front"><img /></div>
+        <div class="paper back"><img /></div>
       </div>
     </section>
 
-    <button class="nav right" id="nextBtn" aria-label="Next">›</button>
+    <button class="nav right" id="nextBtn" aria-label="Next page">›</button>
   </main>
 
   <footer class="bottombar">
