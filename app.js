@@ -33,59 +33,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // 1) 读取第一张图片的真实尺寸，得到宽高比
+  // ---- 1) Read the real pixel size of the first image ----
   function loadImageSize(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
       img.onerror = reject;
-      img.src = src + (src.includes("?") ? "&" : "?") + "v=" + Date.now(); // 避免缓存读不到最新
+      // cache-bust so GitHub/Safari won't reuse old images while testing
+      img.src = src + (src.includes("?") ? "&" : "?") + "v=" + Date.now();
     });
   }
 
-  let ratio = 3 / 4; // fallback
+  // cover.png 的尺寸决定“清晰上限”
+  let imgW = 1200, imgH = 1600; // fallback
   try {
-    const { w, h } = await loadImageSize(PAGES[0]);
-    ratio = w / h;
-  } catch (e) {
-    // 如果读尺寸失败，就用默认 ratio
-  }
+    const size = await loadImageSize(PAGES[0]);
+    imgW = size.w;
+    imgH = size.h;
+  } catch (_) {}
 
-  // 2) 根据 viewport 计算“最贴合”的书本尺寸（不溢出屏幕）
+  // Retina：图片像素 / DPR 才是“清晰的 CSS 尺寸上限”
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const crispMaxW = Math.floor(imgW / dpr);
+  const crispMaxH = Math.floor(imgH / dpr);
+
+  // ---- 2) Choose a book size that fits screen AND never exceeds crisp limit ----
   function calcBookSize() {
     const topbar = 56;
     const bottombar = 80;
 
-    const maxW = Math.min(window.innerWidth * 0.92, 980);
-    const maxH = Math.min(window.innerHeight * 0.92 - topbar - bottombar, 780);
+    // 屏幕允许的最大尺寸
+    const screenMaxW = Math.floor(Math.min(window.innerWidth * 0.92, 980));
+    const screenMaxH = Math.floor(Math.min(window.innerHeight * 0.92 - topbar - bottombar, 780));
 
-    // 先用 maxW 推出高度
+    // 真正的最大尺寸 = 屏幕允许 && 清晰上限 取更小
+    const maxW = Math.max(320, Math.min(screenMaxW, crispMaxW));
+    const maxH = Math.max(420, Math.min(screenMaxH, crispMaxH));
+
+    // 保持图片比例（以第一张图比例为准）
+    const ratio = imgW / imgH;
     let w = maxW;
-    let h = w / ratio;
-
-    // 如果高度超了，就用 maxH 推回宽度
+    let h = Math.floor(w / ratio);
     if (h > maxH) {
       h = maxH;
-      w = h * ratio;
+      w = Math.floor(h * ratio);
     }
-
-    // 最小限制
-    w = Math.max(320, Math.floor(w));
-    h = Math.max(420, Math.floor(h));
 
     return { w, h };
   }
 
-  const size0 = calcBookSize();
-  // 直接给容器定尺寸，确保视觉上“书本比例=图片比例”
-  bookEl.style.width = `${size0.w}px`;
-  bookEl.style.height = `${size0.h}px`;
+  const { w, h } = calcBookSize();
 
-  // 3) 用 fixed 尺寸初始化（关键：不要用 stretch，否则比例又会被拉回去）
+  // 直接给容器锁定尺寸（避免被 CSS 拉大）
+  bookEl.style.width = `${w}px`;
+  bookEl.style.height = `${h}px`;
+
+  // ---- 3) Init PageFlip with fixed size (prevents upscaling blur) ----
   const pageFlip = new St.PageFlip(bookEl, {
-    width: size0.w,
-    height: size0.h,
-    size: "fixed", // 关键：固定比例，不再拉伸成别的比例
+    width: w,
+    height: h,
+    size: "fixed",              // 关键：固定像素尺寸，不让它为了屏幕去放大
     showCover: false,
     mobileScrollSupport: false,
     maxShadowOpacity: 0.25,
@@ -93,6 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   pageFlip.loadFromImages(PAGES);
 
+  // ---- 4) Page indicator ----
   function updateIndicator() {
     const idx = pageFlip.getCurrentPageIndex() + 1;
     pageIndicator.textContent = `${idx}/${PAGES.length}`;
@@ -100,10 +108,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
+  // ---- 5) Arrows ----
   prevBtn?.addEventListener("click", () => pageFlip.flipPrev());
   nextBtn?.addEventListener("click", () => pageFlip.flipNext());
 
-  // TOC（维持原逻辑）
+  // ---- 6) TOC ----
   const TOC = PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
     page: i + 1
@@ -132,13 +141,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      const page = Number(el.dataset.page) - 1;
-      pageFlip.flip(page);
+      pageFlip.flip(Number(el.dataset.page) - 1);
       closeToc();
     });
   }
 
-  // Full screen
+  // ---- 7) Full screen ----
   fsBtn?.addEventListener("click", async () => {
     try {
       if (!document.fullscreenElement) {
@@ -149,50 +157,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (_) {}
   });
 
-  // 4) 旋转/缩放时：重算尺寸 + 重新初始化（最稳，代价是会回到当前页附近）
-  let resizing = false;
-  async function rebuildKeepPage() {
-    if (resizing) return;
-    resizing = true;
-
-    const current = pageFlip.getCurrentPageIndex();
-
-    // 销毁旧实例（page-flip 没有完美的“改尺寸”API，重建最稳定）
-    try { pageFlip.destroy(); } catch (_) {}
-
-    const s = calcBookSize();
-    bookEl.style.width = `${s.w}px`;
-    bookEl.style.height = `${s.h}px`;
-
-    const pf = new St.PageFlip(bookEl, {
-      width: s.w,
-      height: s.h,
-      size: "fixed",
-      showCover: false,
-      mobileScrollSupport: false,
-      maxShadowOpacity: 0.25,
-    });
-
-    pf.loadFromImages(PAGES);
-    pf.on("flip", updateIndicator);
-
-    // 轻微延迟后跳回页数
-    setTimeout(() => {
-      try { pf.flip(current); } catch (_) {}
-      updateIndicator();
-      resizing = false;
-    }, 120);
-
-    // 把外层变量指向新实例（闭包里用到）
-    // 注意：这里为了最少改动，不再继续绑定按钮到新实例
-    // 所以我们直接刷新页面会更干净。若你要“完美重建”，我再给你极简补丁。
-  }
-
-  window.addEventListener("orientationchange", () => {
-    setTimeout(() => location.reload(), 200); // iPhone 上最稳的方式
-  });
+  // ---- 8) On resize/orientation: reload (simplest + avoids re-init bugs) ----
+  window.addEventListener("orientationchange", () => setTimeout(() => location.reload(), 150));
   window.addEventListener("resize", () => {
-    clearTimeout(window.__t);
-    window.__t = setTimeout(() => location.reload(), 200); // 简单粗暴但稳定
+    clearTimeout(window.__rz);
+    window.__rz = setTimeout(() => location.reload(), 150);
   });
 });
