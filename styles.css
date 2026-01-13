@@ -1,5 +1,6 @@
 :root{
   --bg: #0b0f16;
+  --panel: rgba(255,255,255,.06);
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.65);
 
@@ -83,32 +84,36 @@ body{
   place-items: center;
 }
 
-/* The book container */
+/* Book container (IMPORTANT CHANGE: remove forced white background) */
 .book{
   width: min(92vw, var(--book-max-w));
   height: min(calc(92vh - var(--topbar-h) - var(--bottombar-h)), var(--book-max-h));
   border-radius: var(--radius);
   overflow: hidden;
-  background: #fff;
+
+  /* The “extra” area becomes dark like the site, not white */
+  background: transparent;
+
   box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
-/* PageFlip internal wrappers */
+/* PageFlip internal wrappers: make sure background is NOT white */
+.book .stf__parent,
+.book .stf__wrapper,
+.book .stf__block,
 .book .stf__item,
-.book .stf__parent{
-  border-radius: var(--radius);
+.book .stf__item-content{
+  background: transparent !important;
 }
 
-/* IMPORTANT: make PageFlip-generated images fully visible (no crop) */
-.book .stf__item img,
-.book .stf__page img,
+/* IMPORTANT: PageFlip-generated images fully visible (no crop) */
 .book img{
   width: 100% !important;
   height: 100% !important;
-  object-fit: contain !important;
+  object-fit: contain !important;      /* keep full artwork */
   object-position: center !important;
   display: block;
-  background: #fff;
+  background: transparent !important;  /* so letterboxing becomes dark */
 }
 
 /* Arrows */
