@@ -2,12 +2,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== 22 pages total: cover + p01..p21 =====
   const PAGES = [
     "assets/cover.png",
-    ...Array.from({ length: 21 }, (_, i) => {
-      const n = i + 1;
-      // p01..p09 uses leading zero, p10..p21 no need
-      const name = n < 10 ? `p0${n}` : `p${n}`;
-      return `assets/${name}.png`;
-    }),
+    "assets/p01.png",
+    "assets/p02.png",
+    "assets/p03.png",
+    "assets/p04.png",
+    "assets/p05.png",
+    "assets/p06.png",
+    "assets/p07.png",
+    "assets/p08.png",
+    "assets/p09.png",
+    "assets/p10.png",
+    "assets/p11.png",
+    "assets/p12.png",
+    "assets/p13.png",
+    "assets/p14.png",
+    "assets/p15.png",
+    "assets/p16.png",
+    "assets/p17.png",
+    "assets/p18.png",
+    "assets/p19.png",
+    "assets/p20.png",
+    "assets/p21.png",
   ];
 
   const bookEl = document.getElementById("book");
@@ -67,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pageFlip.flipNext();
   });
 
-  // TOC (optional: shows Cover + Page 1..21)
+  // TOC
   const TOC = PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
     page: i + 1,
