@@ -1,139 +1,173 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // ===== 22 pages total: cover + p01..p21 =====
-  const PAGES = [
-    "assets/cover.png",
-    "assets/p01.png",
-    "assets/p02.png",
-    "assets/p03.png",
-    "assets/p04.png",
-    "assets/p05.png",
-    "assets/p06.png",
-    "assets/p07.png",
-    "assets/p08.png",
-    "assets/p09.png",
-    "assets/p10.png",
-    "assets/p11.png",
-    "assets/p12.png",
-    "assets/p13.png",
-    "assets/p14.png",
-    "assets/p15.png",
-    "assets/p16.png",
-    "assets/p17.png",
-    "assets/p18.png",
-    "assets/p19.png",
-    "assets/p20.png",
-    "assets/p21.png",
-  ];
+// ====== Pages (22 images) ======
+const pages = [
+  { label: "Cover", src: "assets/cover.png" },
 
-  const bookEl = document.getElementById("book");
-  const pageIndicator = document.getElementById("pageIndicator");
+  { label: "Clothes tree", src: "assets/p01.png" },
+  { label: "Monitoring", src: "assets/p02.png" },
+  { label: "Mailbox", src: "assets/p03.png" },
+  { label: "Physician", src: "assets/p04.png" },
+  { label: "Film star", src: "assets/p05.png" },
+  { label: "Traffic cone", src: "assets/p06.png" },
+  { label: "Trash Can", src: "assets/p07.png" },
+  { label: "Stool", src: "assets/p08.png" },
+  { label: "Parachute", src: "assets/p09.png" },
+  { label: "Hot Air Balloon", src: "assets/p10.png" },
+  { label: "Bicycle Tyre", src: "assets/p11.png" },
+  { label: "Diamond", src: "assets/p12.png" },
+  { label: "Slipper", src: "assets/p13.png" },
+  { label: "Mobile Phone Shell", src: "assets/p14.png" },
+  { label: "Ear Stud", src: "assets/p15.png" },
+  { label: "Neckerchief", src: "assets/p16.png" },
+  { label: "Cap", src: "assets/p17.png" },
+  { label: "Balloon", src: "assets/p18.png" },
+  { label: "Bed", src: "assets/p19.png" },
+  { label: "Vehicle", src: "assets/p20.png" },
+  { label: "Artist", src: "assets/p21.png" },
+];
 
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
+let index = 0;
+let isAnimating = false;
 
-  const tocBtn = document.getElementById("tocBtn");
-  const fsBtn = document.getElementById("fsBtn");
+const currentImg = document.getElementById("currentImg");
+const nextImg = document.getElementById("nextImg");
+const flipLayer = document.getElementById("flipLayer");
+const flipFrontImg = document.getElementById("flipFrontImg");
+const flipBackImg = document.getElementById("flipBackImg");
+const pageIndicator = document.getElementById("pageIndicator");
 
-  const tocModal = document.getElementById("tocModal");
-  const tocList = document.getElementById("tocList");
-  const closeTocBtn = document.getElementById("closeTocBtn");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
 
-  if (!bookEl) return;
+const tocBtn = document.getElementById("tocBtn");
+const tocModal = document.getElementById("tocModal");
+const tocList = document.getElementById("tocList");
+const closeTocBtn = document.getElementById("closeTocBtn");
 
-  if (typeof St === "undefined" || !St.PageFlip) {
-    bookEl.innerHTML = `
-      <div style="padding:16px;font-family:system-ui;color:#111;background:#fff;border-radius:12px">
-        PageFlip library failed to load. Check index.html script order.
-      </div>
-    `;
-    return;
-  }
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const book = document.querySelector(".book");
 
-  const pageFlip = new St.PageFlip(bookEl, {
-    width: 600,
-    height: 800,
-    size: "stretch",
-    minWidth: 320,
-    maxWidth: 1400,
-    minHeight: 420,
-    maxHeight: 1600,
-    showCover: false,
-    mobileScrollSupport: false,
-    maxShadowOpacity: 0.25,
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+function renderCurrent(){
+  currentImg.src = pages[index].src;
+  pageIndicator.textContent = `${pages[index].label}  ·  ${index+1}/${pages.length}`;
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === pages.length - 1;
+}
+
+function buildTOC(){
+  tocList.innerHTML = "";
+  pages.forEach((p, i) => {
+    const item = document.createElement("div");
+    item.className = "toc-item";
+    item.innerHTML = `<div>${p.label}</div><span>${i+1}/${pages.length}</span>`;
+    item.addEventListener("click", () => {
+      tocModal.close();
+      jumpTo(i);
+    });
+    tocList.appendChild(item);
   });
+}
 
-  pageFlip.loadFromImages(PAGES);
+function jumpTo(i){
+  i = clamp(i, 0, pages.length - 1);
+  index = i;
+  renderCurrent();
+}
 
-  function updateIndicator() {
-    const idx = pageFlip.getCurrentPageIndex() + 1;
-    pageIndicator.textContent = `${idx}/${PAGES.length}`;
-  }
-  pageFlip.on("flip", updateIndicator);
-  updateIndicator();
+function flipTo(nextIndex){
+  if (isAnimating) return;
+  nextIndex = clamp(nextIndex, 0, pages.length - 1);
+  if (nextIndex === index) return;
 
-  // Both directions
-  prevBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    pageFlip.flipPrev();
-  });
+  const forward = nextIndex > index;
+  isAnimating = true;
 
-  nextBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    pageFlip.flipNext();
-  });
+  flipLayer.classList.add("animating");
+  flipLayer.style.transition = "none";
 
-  // TOC
-  const TOC = PAGES.map((_, i) => ({
-    title: i === 0 ? "Cover" : `Page ${i}`,
-    page: i + 1,
-  }));
+  const fromSrc = pages[index].src;
+  const toSrc = pages[nextIndex].src;
 
-  function openToc() {
-    tocModal.classList.add("show");
-    tocModal.setAttribute("aria-hidden", "false");
-  }
-  function closeToc() {
-    tocModal.classList.remove("show");
-    tocModal.setAttribute("aria-hidden", "true");
-  }
+  if (forward){
+    flipLayer.style.transformOrigin = "left center";
+    flipFrontImg.src = fromSrc;
+    flipBackImg.src = toSrc;
+    nextImg.src = toSrc;
 
-  tocBtn?.addEventListener("click", openToc);
-  closeTocBtn?.addEventListener("click", closeToc);
-  tocModal?.addEventListener("click", (e) => {
-    if (e.target === tocModal) closeToc();
-  });
+    flipLayer.style.transform = "rotateY(0deg)";
+    requestAnimationFrame(() => {
+      flipLayer.style.transition = "transform 520ms cubic-bezier(.2,.8,.2,1)";
+      flipLayer.style.transform = "rotateY(-180deg)";
+    });
+  } else {
+    flipLayer.style.transformOrigin = "right center";
+    flipFrontImg.src = fromSrc;
+    flipBackImg.src = toSrc;
+    nextImg.src = toSrc;
 
-  if (tocList) {
-    tocList.innerHTML = TOC.map(
-      (item) => `<div class="toc-item" data-page="${item.page}">${item.title}</div>`
-    ).join("");
-
-    tocList.addEventListener("click", (e) => {
-      const el = e.target.closest(".toc-item");
-      if (!el) return;
-      pageFlip.flip(Number(el.dataset.page) - 1);
-      closeToc();
+    flipLayer.style.transform = "rotateY(0deg)";
+    requestAnimationFrame(() => {
+      flipLayer.style.transition = "transform 520ms cubic-bezier(.2,.8,.2,1)";
+      flipLayer.style.transform = "rotateY(180deg)";
     });
   }
 
-  // Full screen
-  fsBtn?.addEventListener("click", async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (_) {}
-  });
+  setTimeout(() => {
+    index = nextIndex;
+    renderCurrent();
+    flipLayer.classList.remove("animating");
+    flipLayer.style.transition = "none";
+    flipLayer.style.transform = "rotateY(0deg)";
+    isAnimating = false;
+  }, 540);
+}
 
-  // Keep stable on resize
-  let t;
-  window.addEventListener("resize", () => {
-    clearTimeout(t);
-    t = setTimeout(() => pageFlip.update(), 120);
-  });
-  window.addEventListener("orientationchange", () => {
-    setTimeout(() => pageFlip.update(), 200);
-  });
+// Buttons
+prevBtn.addEventListener("click", () => flipTo(index - 1));
+nextBtn.addEventListener("click", () => flipTo(index + 1));
+
+// TOC
+tocBtn.addEventListener("click", () => tocModal.showModal());
+closeTocBtn.addEventListener("click", () => tocModal.close());
+
+// Fullscreen (works best on Android; iOS Safari has limitations)
+fullscreenBtn.addEventListener("click", async () => {
+  try{
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch(e){
+    // ignore
+  }
 });
+
+// Swipe support
+let startX = 0;
+let startY = 0;
+let moved = false;
+
+book.addEventListener("touchstart", (e) => {
+  if (!e.touches || e.touches.length !== 1) return;
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+  moved = false;
+}, { passive: true });
+
+book.addEventListener("touchmove", (e) => {
+  if (!e.touches || e.touches.length !== 1) return;
+  const dx = e.touches[0].clientX - startX;
+  const dy = e.touches[0].clientY - startY;
+  if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) moved = true;
+}, { passive: true });
+
+book.addEventListener("touchend", (e) => {
+  if (!moved) return;
+  const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : startX;
+  const dx = endX - startX;
+  if (dx < -30) flipTo(index + 1);
+  if (dx > 30) flipTo(index - 1);
+});
+
+// Init
+buildTOC();
+renderCurrent();
