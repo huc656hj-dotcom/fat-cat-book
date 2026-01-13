@@ -352,9 +352,33 @@ body{
 .page.blank{
   background: #fff;
 }
-.page.blank{ background:#ff00ff !important; }
-/* TEST: if you ever see a bright pink page, it means the blank-back system is running */
-.page.blank{ background:#ff00ff !important; }
+/* =========================================================
+   FIX: iOS Safari blur caused by 3D transform rasterization
+   Goal: keep line art crisp on mobile
+   ========================================================= */
+
+/* 1. Tell Safari to keep vector/hi-res rendering */
+#book img{
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 2. Prevent PageFlip from downscaling pages on mobile */
+@media (max-width: 768px){
+  #book,
+  #book .stf__item,
+  #book .stf__page,
+  #book .stf__item-content{
+    transform-style: flat !important;
+    perspective: none !important;
+  }
+}
+
+
 
 
 
