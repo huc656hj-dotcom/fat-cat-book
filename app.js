@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // 原始插画页
-  const ART_PAGES = [
+  const PAGES = [
     "assets/cover.png",
     "assets/p01.png",
     "assets/p02.png",
@@ -34,93 +33,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ===== Build HTML pages: (art page) + (blank back) + (art page) + (blank back) ...
-  // 这样翻页时，翻起来的那一面永远是 blank（纯白），不会“透出/出现另一张图”
-  const htmlPages = [];
-  for (const src of ART_PAGES) {
-    const front = document.createElement("div");
-    front.className = "page";
-    front.innerHTML = `<img src="${src}" alt="">`;
-
-    const back = document.createElement("div");
-    back.className = "page blank";
-    // 空白页无需内容
-
-    htmlPages.push(front, back);
-  }
-
-  // ===== Init PageFlip
+  // Init PageFlip (classic setup)
   const pageFlip = new St.PageFlip(bookEl, {
     width: 600,
     height: 800,
+
     size: "stretch",
     minWidth: 320,
     maxWidth: 1400,
     minHeight: 420,
     maxHeight: 1600,
+
     showCover: false,
     mobileScrollSupport: false,
     maxShadowOpacity: 0.25,
   });
 
-  pageFlip.loadFromHTML(htmlPages);
+  pageFlip.loadFromImages(PAGES);
 
-  // ===== Helper: keep users on ART pages only (even indices: 0,2,4...)
-  function isBlankIndex(i) {
-    return i % 2 === 1;
-  }
-  function artIndexFromReal(i) {
-    return Math.floor(i / 2) + 1; // 1-based for display
-  }
-  function realIndexFromArt(art1Based) {
-    return (art1Based - 1) * 2;
-  }
-
+  // Page indicator
   function updateIndicator() {
-    const i = pageFlip.getCurrentPageIndex(); // 0-based real index
-    const artIdx = artIndexFromReal(i);
-    pageIndicator.textContent = `${artIdx}/${ART_PAGES.length}`;
+    const idx = pageFlip.getCurrentPageIndex() + 1;
+    pageIndicator.textContent = `${idx}/${PAGES.length}`;
   }
-
-  // 翻到空白页就自动再翻一次，确保用户不会停在 blank
-  let autoFixing = false;
-  function skipIfBlank() {
-    if (autoFixing) return;
-    const i = pageFlip.getCurrentPageIndex();
-    if (isBlankIndex(i)) {
-      autoFixing = true;
-      // 往前翻还是往后翻：根据当前更接近哪边决定
-      // 简化：一律往后翻（更符合“翻过去看到下一张内容”）
-      pageFlip.flipNext();
-      setTimeout(() => {
-        autoFixing = false;
-        updateIndicator();
-      }, 50);
-    } else {
-      updateIndicator();
-    }
-  }
-
-  pageFlip.on("flip", skipIfBlank);
+  pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
-  // Buttons: always jump between art pages (step = 2)
-  prevBtn?.addEventListener("click", () => {
-    const i = pageFlip.getCurrentPageIndex();
-    const target = Math.max(0, i - 2);
-    pageFlip.flip(target);
-  });
+  // IMPORTANT: allow both directions
+  prevBtn?.addEventListener("click", () => pageFlip.flipPrev());
+  nextBtn?.addEventListener("click", () => pageFlip.flipNext());
 
-  nextBtn?.addEventListener("click", () => {
-    const i = pageFlip.getCurrentPageIndex();
-    const target = Math.min(htmlPages.length - 1, i + 2);
-    pageFlip.flip(target);
-  });
-
-  // ===== TOC (maps to art pages)
-  const TOC = ART_PAGES.map((_, i) => ({
+  // TOC
+  const TOC = PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
-    page: i + 1, // art page number (1-based)
+    page: i + 1
   }));
 
   function openToc() {
@@ -140,19 +86,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (tocList) {
     tocList.innerHTML = TOC.map(
-      (item) => `<div class="toc-item" data-art="${item.page}">${item.title}</div>`
+      (item) => `<div class="toc-item" data-page="${item.page}">${item.title}</div>`
     ).join("");
 
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      const art = Number(el.dataset.art);
-      pageFlip.flip(realIndexFromArt(art));
+      const page = Number(el.dataset.page) - 1; // 0-based
+      pageFlip.flip(page);
       closeToc();
     });
   }
 
-  // ===== Fullscreen
+  // Fullscreen
   fsBtn?.addEventListener("click", async () => {
     try {
       if (!document.fullscreenElement) {
@@ -163,10 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   });
 
-  // Resize/orientation: simplest stable approach
-  window.addEventListener("orientationchange", () => setTimeout(() => location.reload(), 150));
+  // Resize/orientation: update (no reload, keep behavior consistent)
+  let t;
   window.addEventListener("resize", () => {
-    clearTimeout(window.__rz);
-    window.__rz = setTimeout(() => location.reload(), 150);
+    clearTimeout(t);
+    t = setTimeout(() => pageFlip.update(), 120);
+  });
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => pageFlip.update(), 200);
   });
 });
