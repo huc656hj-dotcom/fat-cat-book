@@ -1,6 +1,5 @@
 :root{
   --bg: #0b0f16;
-  --panel: rgba(255,255,255,.06);
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.65);
 
@@ -84,36 +83,28 @@ body{
   place-items: center;
 }
 
-/* Book container (IMPORTANT CHANGE: remove forced white background) */
+/* Book container */
 .book{
   width: min(92vw, var(--book-max-w));
   height: min(calc(92vh - var(--topbar-h) - var(--bottombar-h)), var(--book-max-h));
   border-radius: var(--radius);
   overflow: hidden;
-
-  /* The “extra” area becomes dark like the site, not white */
-  background: transparent;
-
+  background: #fff;
   box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
-/* PageFlip internal wrappers: make sure background is NOT white */
-.book .stf__parent,
-.book .stf__wrapper,
-.book .stf__block,
-.book .stf__item,
-.book .stf__item-content{
-  background: transparent !important;
-}
-
-/* IMPORTANT: PageFlip-generated images fully visible (no crop) */
-.book img{
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;      /* keep full artwork */
+/* IMPORTANT: keep artwork visible & centered */
+#book img{
+  object-fit: contain !important;
   object-position: center !important;
-  display: block;
-  background: transparent !important;  /* so letterboxing becomes dark */
+  background: #fff !important;
+
+  /* iOS Safari: improve crispness when PageFlip applies transforms */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* Arrows */
@@ -228,161 +219,3 @@ body{
   .nav-left{ left: -52px; }
   .nav-right{ right: -52px; }
 }
-/* === FIX: remove the extra white letterbox area inside PageFlip === */
-/* The white bars are the PAGE background, not your image. Force the real page layer to be transparent. */
-
-#book,
-#book * {
-  background-color: transparent !important;
-}
-
-/* PageFlip page layers (these class names are used by page-flip) */
-#book .stf__page,
-#book .stf__item,
-#book .stf__item-content,
-#book .stf__block,
-#book .stf__wrapper,
-#book .stf__parent {
-  background: transparent !important;
-}
-
-/* Keep the actual artwork visible and centered */
-#book img{
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  object-position: center !important;
-  background: transparent !important;
-}
-/* === FIX: prevent any non-uniform stretching (squashed look) === */
-
-/* If PageFlip uses <img> */
-#book img{
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  object-fit: contain !important;
-  object-position: center !important;
-  transform: none !important; /* in case you tried zoom before */
-}
-
-/* Ensure the image is centered inside the page box */
-#book .stf__item-content,
-#book .stf__page{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* If PageFlip renders pages as background-image */
-#book .stf__page,
-#book .stf__item{
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  background-size: contain !important; /* key: keep ratio, no squash */
-}
-/* === FIX: stop seeing two illustrations during flipping === */
-/* Reason: page layers were made transparent, so underlying pages show through.
-   Solution: force the actual sheet/page background to be opaque. */
-
-#book .stf__page,
-#book .stf__item,
-#book .stf__item-content,
-#book .stf__block,
-#book .stf__wrapper,
-#book .stf__parent{
-  background: #fff !important;        /* 如果你想背面全黑，改成 #000 */
-}
-
-/* Make sure page faces are not “see-through” during 3D flip */
-#book .stf__page,
-#book .stf__item{
-  backface-visibility: hidden !important;
-  -webkit-backface-visibility: hidden !important;
-}
-
-/* Keep artwork crisp + no stretching */
-#book img{
-  object-fit: contain !important;
-  object-position: center !important;
-  background: #fff !important;        /* 如果你上面改成 #000，这里也改 #000 */
-}
-/* 背面纯白：防止翻页时透出下一页内容 */
-#book .stf__page,
-#book .stf__item,
-#book .stf__item-content,
-#book .stf__block,
-#book .stf__wrapper,
-#book .stf__parent{
-  background: #fff !important;
-}
-
-#book .stf__page,
-#book .stf__item{
-  backface-visibility: hidden !important;
-  -webkit-backface-visibility: hidden !important;
-}
-
-/* 图片保持等比，不被压扁 */
-#book img{
-  object-fit: contain !important;
-  object-position: center !important;
-  background: #fff !important;
-}
-/* ===== Page elements for loadFromHTML (must fill the flip area) ===== */
-.page{
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  display: block;
-  background: #fff;
-}
-
-.page.blank{
-  background: #fff;
-}
-/* =========================================================
-   FIX: iOS Safari blur caused by 3D transform rasterization
-   Goal: keep line art crisp on mobile
-   ========================================================= */
-
-/* 1. Tell Safari to keep vector/hi-res rendering */
-#book img{
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  will-change: auto;
-  transform: translateZ(0);
-}
-
-/* 2. Prevent PageFlip from downscaling pages on mobile */
-@media (max-width: 768px){
-  #book,
-  #book .stf__item,
-  #book .stf__page,
-  #book .stf__item-content{
-    transform-style: flat !important;
-    perspective: none !important;
-  }
-}
-
-
-
-
-
-
-
-
-
