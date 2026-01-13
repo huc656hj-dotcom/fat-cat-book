@@ -330,6 +330,29 @@ body{
   object-position: center !important;
   background: #fff !important;
 }
+/* ===== Page elements for loadFromHTML (must fill the flip area) ===== */
+.page{
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  background: #fff;
+}
+
+.page.blank{
+  background: #fff;
+}
+
 
 
 
