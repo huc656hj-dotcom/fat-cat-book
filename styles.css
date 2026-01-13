@@ -228,3 +228,30 @@ body{
   .nav-left{ left: -52px; }
   .nav-right{ right: -52px; }
 }
+/* === FIX: remove the extra white letterbox area inside PageFlip === */
+/* The white bars are the PAGE background, not your image. Force the real page layer to be transparent. */
+
+#book,
+#book * {
+  background-color: transparent !important;
+}
+
+/* PageFlip page layers (these class names are used by page-flip) */
+#book .stf__page,
+#book .stf__item,
+#book .stf__item-content,
+#book .stf__block,
+#book .stf__wrapper,
+#book .stf__parent {
+  background: transparent !important;
+}
+
+/* Keep the actual artwork visible and centered */
+#book img{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: transparent !important;
+}
+
