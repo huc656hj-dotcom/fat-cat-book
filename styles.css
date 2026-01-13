@@ -83,6 +83,7 @@ body{
   place-items: center;
 }
 
+/* The book container */
 .book{
   width: min(92vw, var(--book-max-w));
   height: min(calc(92vh - var(--topbar-h) - var(--bottombar-h)), var(--book-max-h));
@@ -92,26 +93,20 @@ body{
   box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
-/* PageFlip internal elements */
+/* PageFlip internal wrappers */
 .book .stf__item,
 .book .stf__parent{
   border-radius: var(--radius);
 }
 
-/* page wrapper we generate in JS */
-.page{
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.page img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;      /* IMPORTANT: never crop */
-  object-position: center;  /* center */
+/* IMPORTANT: make PageFlip-generated images fully visible (no crop) */
+.book .stf__item img,
+.book .stf__page img,
+.book img{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
   display: block;
   background: #fff;
 }
@@ -149,4 +144,82 @@ body{
     calc(var(--gap) + env(safe-area-inset-right))
     calc(10px + env(safe-area-inset-bottom))
     calc(var(--gap) + env(safe-area-inset-left));
-  background: rgba(0,0,0
+  background: rgba(0,0,0,.18);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.btn{
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Modal */
+.modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,.55);
+}
+.modal.show{ display: flex; }
+
+.modal-card{
+  width: min(560px, 92vw);
+  max-height: min(70vh, 520px);
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(20,24,33,.92);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+}
+
+.modal-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.modal-title{ font-weight: 700; }
+
+.icon-btn{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modal-body{
+  padding: 10px 16px 16px;
+  overflow: auto;
+}
+
+.toc-item{
+  padding: 10px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.06);
+  margin-top: 10px;
+}
+.toc-item:hover{ background: rgba(255,255,255,.06); }
+
+@media (max-width: 768px){
+  :root{
+    --topbar-h: 56px;
+    --bottombar-h: 76px;
+    --gap: 10px;
+  }
+  .nav-left{ left: -52px; }
+  .nav-right{ right: -52px; }
+}
