@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ===== Image list (MUST match your repo /assets filenames) =====
   const PAGES = [
     "assets/cover.png",
     "assets/p01.png",
@@ -10,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "assets/p06.png",
   ];
 
-  // ===== Elements =====
   const bookEl = document.getElementById("book");
   const pageIndicator = document.getElementById("pageIndicator");
 
@@ -24,31 +22,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const tocList = document.getElementById("tocList");
   const closeTocBtn = document.getElementById("closeTocBtn");
 
-  // ===== Guard rails (avoid silent white page) =====
-  if (!bookEl) {
-    alert('Missing container: <div id="book">');
-    return;
-  }
+  if (!bookEl) return;
+
   if (typeof St === "undefined" || !St.PageFlip) {
     bookEl.innerHTML = `
-      <div style="padding:16px;font-family:system-ui;color:#111">
+      <div style="padding:16px;font-family:system-ui;color:#111;background:#fff;border-radius:12px">
         PageFlip library failed to load. Check index.html script order.
       </div>
     `;
     return;
   }
 
-  // ===== Init PageFlip =====
   const pageFlip = new St.PageFlip(bookEl, {
     width: 600,
     height: 800,
-
     size: "stretch",
     minWidth: 320,
     maxWidth: 1400,
     minHeight: 420,
     maxHeight: 1600,
-
     showCover: false,
     mobileScrollSupport: false,
     maxShadowOpacity: 0.25,
@@ -56,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   pageFlip.loadFromImages(PAGES);
 
-  // ===== Page indicator =====
   function updateIndicator() {
     const idx = pageFlip.getCurrentPageIndex() + 1;
     pageIndicator.textContent = `${idx}/${PAGES.length}`;
@@ -64,13 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
   pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
-  // ===== Arrows =====
   prevBtn?.addEventListener("click", () => pageFlip.flipPrev());
   nextBtn?.addEventListener("click", () => pageFlip.flipNext());
 
-  // ===== TOC =====
-  // You can rename these titles if you want.
-  const TOC = PAGES.map((src, i) => ({
+  // TOC
+  const TOC = PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
     page: i + 1
   }));
@@ -98,13 +87,13 @@ document.addEventListener("DOMContentLoaded", () => {
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      const page = Number(el.dataset.page) - 1; // to 0-based
+      const page = Number(el.dataset.page) - 1;
       pageFlip.flip(page);
       closeToc();
     });
   }
 
-  // ===== Fullscreen =====
+  // Full screen
   fsBtn?.addEventListener("click", async () => {
     try {
       if (!document.fullscreenElement) {
@@ -112,12 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         await document.exitFullscreen();
       }
-    } catch (_) {
-      // Safari iOS may block fullscreen; ignore quietly
-    }
+    } catch (_) {}
   });
 
-  // ===== Resize / orientation =====
+  // Resize
   let t;
   window.addEventListener("resize", () => {
     clearTimeout(t);
