@@ -1,12 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ===== 22 pages total: cover + p01..p21 =====
   const PAGES = [
     "assets/cover.png",
-    "assets/p01.png",
-    "assets/p02.png",
-    "assets/p03.png",
-    "assets/p04.png",
-    "assets/p05.png",
-    "assets/p06.png",
+    ...Array.from({ length: 21 }, (_, i) => {
+      const n = i + 1;
+      // p01..p09 uses leading zero, p10..p21 no need
+      const name = n < 10 ? `p0${n}` : `p${n}`;
+      return `assets/${name}.png`;
+    }),
   ];
 
   const bookEl = document.getElementById("book");
@@ -55,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
-  // Both directions (this MUST work)
+  // Both directions
   prevBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     pageFlip.flipPrev();
@@ -66,10 +67,10 @@ document.addEventListener("DOMContentLoaded", () => {
     pageFlip.flipNext();
   });
 
-  // TOC
+  // TOC (optional: shows Cover + Page 1..21)
   const TOC = PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
-    page: i + 1
+    page: i + 1,
   }));
 
   function openToc() {
