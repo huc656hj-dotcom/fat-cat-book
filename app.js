@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   const bookEl = document.getElementById("book");
-  const shellEl = document.getElementById("shell");
   const pageIndicator = document.getElementById("pageIndicator");
 
   const prevBtn = document.getElementById("prevBtn");
@@ -37,13 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const pageFlip = new St.PageFlip(bookEl, {
     width: 600,
     height: 800,
-
     size: "stretch",
     minWidth: 320,
     maxWidth: 1400,
     minHeight: 420,
     maxHeight: 1600,
-
     showCover: false,
     mobileScrollSupport: false,
     maxShadowOpacity: 0.25,
@@ -58,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
-  // Buttons: both directions
+  // Both directions (this MUST work)
   prevBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     pageFlip.flipPrev();
@@ -68,42 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     pageFlip.flipNext();
   });
-
-  // Swipe gestures: reliable back/forward on mobile
-  let startX = 0, startY = 0, isTouching = false;
-
-  function onTouchStart(ev) {
-    if (!ev.touches || ev.touches.length !== 1) return;
-    isTouching = true;
-    startX = ev.touches[0].clientX;
-    startY = ev.touches[0].clientY;
-  }
-
-  function onTouchEnd(ev) {
-    if (!isTouching) return;
-    isTouching = false;
-
-    const t = ev.changedTouches && ev.changedTouches[0];
-    if (!t) return;
-
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-
-    // horizontal swipe only
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-
-    if (dx > 0) {
-      // swipe right -> previous
-      pageFlip.flipPrev();
-    } else {
-      // swipe left -> next
-      pageFlip.flipNext();
-    }
-  }
-
-  // attach on the whole shell so it always works
-  shellEl?.addEventListener("touchstart", onTouchStart, { passive: true });
-  shellEl?.addEventListener("touchend", onTouchEnd, { passive: true });
 
   // TOC
   const TOC = PAGES.map((_, i) => ({
@@ -134,13 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      const page = Number(el.dataset.page) - 1;
-      pageFlip.flip(page);
+      pageFlip.flip(Number(el.dataset.page) - 1);
       closeToc();
     });
   }
 
-  // Fullscreen
+  // Full screen
   fsBtn?.addEventListener("click", async () => {
     try {
       if (!document.fullscreenElement) {
@@ -151,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   });
 
-  // Resize/orientation: update
+  // Keep stable on resize
   let t;
   window.addEventListener("resize", () => {
     clearTimeout(t);
