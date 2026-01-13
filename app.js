@@ -1,5 +1,6 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const PAGES = [
+document.addEventListener("DOMContentLoaded", () => {
+  // 原始插画页
+  const ART_PAGES = [
     "assets/cover.png",
     "assets/p01.png",
     "assets/p02.png",
@@ -33,89 +34,93 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // ---- 1) Read the real pixel size of the first image ----
-  function loadImageSize(src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = reject;
-      // cache-bust so GitHub/Safari won't reuse old images while testing
-      img.src = src + (src.includes("?") ? "&" : "?") + "v=" + Date.now();
-    });
+  // ===== Build HTML pages: (art page) + (blank back) + (art page) + (blank back) ...
+  // 这样翻页时，翻起来的那一面永远是 blank（纯白），不会“透出/出现另一张图”
+  const htmlPages = [];
+  for (const src of ART_PAGES) {
+    const front = document.createElement("div");
+    front.className = "page";
+    front.innerHTML = `<img src="${src}" alt="">`;
+
+    const back = document.createElement("div");
+    back.className = "page blank";
+    // 空白页无需内容
+
+    htmlPages.push(front, back);
   }
 
-  // cover.png 的尺寸决定“清晰上限”
-  let imgW = 1200, imgH = 1600; // fallback
-  try {
-    const size = await loadImageSize(PAGES[0]);
-    imgW = size.w;
-    imgH = size.h;
-  } catch (_) {}
-
-  // Retina：图片像素 / DPR 才是“清晰的 CSS 尺寸上限”
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const crispMaxW = Math.floor(imgW / dpr);
-  const crispMaxH = Math.floor(imgH / dpr);
-
-  // ---- 2) Choose a book size that fits screen AND never exceeds crisp limit ----
-  function calcBookSize() {
-    const topbar = 56;
-    const bottombar = 80;
-
-    // 屏幕允许的最大尺寸
-    const screenMaxW = Math.floor(Math.min(window.innerWidth * 0.92, 980));
-    const screenMaxH = Math.floor(Math.min(window.innerHeight * 0.92 - topbar - bottombar, 780));
-
-    // 真正的最大尺寸 = 屏幕允许 && 清晰上限 取更小
-    const maxW = Math.max(320, Math.min(screenMaxW, crispMaxW));
-    const maxH = Math.max(420, Math.min(screenMaxH, crispMaxH));
-
-    // 保持图片比例（以第一张图比例为准）
-    const ratio = imgW / imgH;
-    let w = maxW;
-    let h = Math.floor(w / ratio);
-    if (h > maxH) {
-      h = maxH;
-      w = Math.floor(h * ratio);
-    }
-
-    return { w, h };
-  }
-
-  const { w, h } = calcBookSize();
-
-  // 直接给容器锁定尺寸（避免被 CSS 拉大）
-  bookEl.style.width = `${w}px`;
-  bookEl.style.height = `${h}px`;
-
-  // ---- 3) Init PageFlip with fixed size (prevents upscaling blur) ----
+  // ===== Init PageFlip
   const pageFlip = new St.PageFlip(bookEl, {
-    width: w,
-    height: h,
-    size: "fixed",              // 关键：固定像素尺寸，不让它为了屏幕去放大
+    width: 600,
+    height: 800,
+    size: "stretch",
+    minWidth: 320,
+    maxWidth: 1400,
+    minHeight: 420,
+    maxHeight: 1600,
     showCover: false,
     mobileScrollSupport: false,
     maxShadowOpacity: 0.25,
   });
 
-  pageFlip.loadFromImages(PAGES);
+  pageFlip.loadFromHTML(htmlPages);
 
-  // ---- 4) Page indicator ----
-  function updateIndicator() {
-    const idx = pageFlip.getCurrentPageIndex() + 1;
-    pageIndicator.textContent = `${idx}/${PAGES.length}`;
+  // ===== Helper: keep users on ART pages only (even indices: 0,2,4...)
+  function isBlankIndex(i) {
+    return i % 2 === 1;
   }
-  pageFlip.on("flip", updateIndicator);
+  function artIndexFromReal(i) {
+    return Math.floor(i / 2) + 1; // 1-based for display
+  }
+  function realIndexFromArt(art1Based) {
+    return (art1Based - 1) * 2;
+  }
+
+  function updateIndicator() {
+    const i = pageFlip.getCurrentPageIndex(); // 0-based real index
+    const artIdx = artIndexFromReal(i);
+    pageIndicator.textContent = `${artIdx}/${ART_PAGES.length}`;
+  }
+
+  // 翻到空白页就自动再翻一次，确保用户不会停在 blank
+  let autoFixing = false;
+  function skipIfBlank() {
+    if (autoFixing) return;
+    const i = pageFlip.getCurrentPageIndex();
+    if (isBlankIndex(i)) {
+      autoFixing = true;
+      // 往前翻还是往后翻：根据当前更接近哪边决定
+      // 简化：一律往后翻（更符合“翻过去看到下一张内容”）
+      pageFlip.flipNext();
+      setTimeout(() => {
+        autoFixing = false;
+        updateIndicator();
+      }, 50);
+    } else {
+      updateIndicator();
+    }
+  }
+
+  pageFlip.on("flip", skipIfBlank);
   updateIndicator();
 
-  // ---- 5) Arrows ----
-  prevBtn?.addEventListener("click", () => pageFlip.flipPrev());
-  nextBtn?.addEventListener("click", () => pageFlip.flipNext());
+  // Buttons: always jump between art pages (step = 2)
+  prevBtn?.addEventListener("click", () => {
+    const i = pageFlip.getCurrentPageIndex();
+    const target = Math.max(0, i - 2);
+    pageFlip.flip(target);
+  });
 
-  // ---- 6) TOC ----
-  const TOC = PAGES.map((_, i) => ({
+  nextBtn?.addEventListener("click", () => {
+    const i = pageFlip.getCurrentPageIndex();
+    const target = Math.min(htmlPages.length - 1, i + 2);
+    pageFlip.flip(target);
+  });
+
+  // ===== TOC (maps to art pages)
+  const TOC = ART_PAGES.map((_, i) => ({
     title: i === 0 ? "Cover" : `Page ${i}`,
-    page: i + 1
+    page: i + 1, // art page number (1-based)
   }));
 
   function openToc() {
@@ -135,18 +140,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (tocList) {
     tocList.innerHTML = TOC.map(
-      (item) => `<div class="toc-item" data-page="${item.page}">${item.title}</div>`
+      (item) => `<div class="toc-item" data-art="${item.page}">${item.title}</div>`
     ).join("");
 
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      pageFlip.flip(Number(el.dataset.page) - 1);
+      const art = Number(el.dataset.art);
+      pageFlip.flip(realIndexFromArt(art));
       closeToc();
     });
   }
 
-  // ---- 7) Full screen ----
+  // ===== Fullscreen
   fsBtn?.addEventListener("click", async () => {
     try {
       if (!document.fullscreenElement) {
@@ -157,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (_) {}
   });
 
-  // ---- 8) On resize/orientation: reload (simplest + avoids re-init bugs) ----
+  // Resize/orientation: simplest stable approach
   window.addEventListener("orientationchange", () => setTimeout(() => location.reload(), 150));
   window.addEventListener("resize", () => {
     clearTimeout(window.__rz);
