@@ -2,7 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-widt<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>The Fat Cat Manual</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="topbar" aria-label="Top bar">
+    <div class="dot" aria-hidden="true"></div>
+    <div class="title">The Fat Cat Manual</div>
+    <div class="meta">
+      <span class="muted">Project Statement</span>
+      <span class="sep">·</span>
+      <span id="pageIndicator">1/1</span>
+    </div>
+  </header>
+
+  <main class="stage" aria-label="Flipbook stage">
+    <div class="book-shell" id="shell">
+      <div id="book" class="book" aria-label="Flipbook"></div>
+
+      <button class="nav nav-left" id="prevBtn" aria-label="Previous page">‹</button>
+      <button class="nav nav-right" id="nextBtn" aria-label="Next page">›</button>
+    </div>
+  </main>
+
+  <footer class="bottombar" aria-label="Bottom bar">
+    <button class="btn" id="tocBtn" type="button">TOC</button>
+    <button class="btn" id="fsBtn" type="button">Full Screen</button>
+  </footer>
+
+  <div class="modal" id="tocModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Table of Contents</div>
+        <button class="icon-btn" id="closeTocBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="tocList"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+h, initial-scale=1, viewport-fit=cover" />
   <title>The Fat Cat Manual</title>
 
   <!-- cache-bust: do NOT change your page URL, only asset URLs -->
@@ -52,3 +100,4 @@
   <script src="app.js?v=20260113a"></script>
 </body>
 </html>
+
