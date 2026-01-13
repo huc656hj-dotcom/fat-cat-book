@@ -353,6 +353,9 @@ body{
   background: #fff;
 }
 .page.blank{ background:#ff00ff !important; }
+/* TEST: if you ever see a bright pink page, it means the blank-back system is running */
+.page.blank{ background:#ff00ff !important; }
+
 
 
 
