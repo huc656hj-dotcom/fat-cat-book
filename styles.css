@@ -282,5 +282,32 @@ body{
   background-position: center !important;
   background-size: contain !important; /* key: keep ratio, no squash */
 }
+/* === FIX: stop seeing two illustrations during flipping === */
+/* Reason: page layers were made transparent, so underlying pages show through.
+   Solution: force the actual sheet/page background to be opaque. */
+
+#book .stf__page,
+#book .stf__item,
+#book .stf__item-content,
+#book .stf__block,
+#book .stf__wrapper,
+#book .stf__parent{
+  background: #fff !important;        /* 如果你想背面全黑，改成 #000 */
+}
+
+/* Make sure page faces are not “see-through” during 3D flip */
+#book .stf__page,
+#book .stf__item{
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+/* Keep artwork crisp + no stretching */
+#book img{
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #fff !important;        /* 如果你上面改成 #000，这里也改 #000 */
+}
+
 
 
