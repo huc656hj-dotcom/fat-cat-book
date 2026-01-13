@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   const bookEl = document.getElementById("book");
+  const shellEl = document.getElementById("shell");
   const pageIndicator = document.getElementById("pageIndicator");
 
   const prevBtn = document.getElementById("prevBtn");
@@ -33,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Init PageFlip (classic setup)
   const pageFlip = new St.PageFlip(bookEl, {
     width: 600,
     height: 800,
@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   pageFlip.loadFromImages(PAGES);
 
-  // Page indicator
   function updateIndicator() {
     const idx = pageFlip.getCurrentPageIndex() + 1;
     pageIndicator.textContent = `${idx}/${PAGES.length}`;
@@ -59,9 +58,52 @@ document.addEventListener("DOMContentLoaded", () => {
   pageFlip.on("flip", updateIndicator);
   updateIndicator();
 
-  // IMPORTANT: allow both directions
-  prevBtn?.addEventListener("click", () => pageFlip.flipPrev());
-  nextBtn?.addEventListener("click", () => pageFlip.flipNext());
+  // Buttons: both directions
+  prevBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    pageFlip.flipPrev();
+  });
+
+  nextBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    pageFlip.flipNext();
+  });
+
+  // Swipe gestures: reliable back/forward on mobile
+  let startX = 0, startY = 0, isTouching = false;
+
+  function onTouchStart(ev) {
+    if (!ev.touches || ev.touches.length !== 1) return;
+    isTouching = true;
+    startX = ev.touches[0].clientX;
+    startY = ev.touches[0].clientY;
+  }
+
+  function onTouchEnd(ev) {
+    if (!isTouching) return;
+    isTouching = false;
+
+    const t = ev.changedTouches && ev.changedTouches[0];
+    if (!t) return;
+
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    // horizontal swipe only
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+
+    if (dx > 0) {
+      // swipe right -> previous
+      pageFlip.flipPrev();
+    } else {
+      // swipe left -> next
+      pageFlip.flipNext();
+    }
+  }
+
+  // attach on the whole shell so it always works
+  shellEl?.addEventListener("touchstart", onTouchStart, { passive: true });
+  shellEl?.addEventListener("touchend", onTouchEnd, { passive: true });
 
   // TOC
   const TOC = PAGES.map((_, i) => ({
@@ -92,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tocList.addEventListener("click", (e) => {
       const el = e.target.closest(".toc-item");
       if (!el) return;
-      const page = Number(el.dataset.page) - 1; // 0-based
+      const page = Number(el.dataset.page) - 1;
       pageFlip.flip(page);
       closeToc();
     });
@@ -109,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   });
 
-  // Resize/orientation: update (no reload, keep behavior consistent)
+  // Resize/orientation: update
   let t;
   window.addEventListener("resize", () => {
     clearTimeout(t);
