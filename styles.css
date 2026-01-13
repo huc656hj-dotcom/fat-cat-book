@@ -308,6 +308,29 @@ body{
   object-position: center !important;
   background: #fff !important;        /* 如果你上面改成 #000，这里也改 #000 */
 }
+/* 背面纯白：防止翻页时透出下一页内容 */
+#book .stf__page,
+#book .stf__item,
+#book .stf__item-content,
+#book .stf__block,
+#book .stf__wrapper,
+#book .stf__parent{
+  background: #fff !important;
+}
+
+#book .stf__page,
+#book .stf__item{
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+/* 图片保持等比，不被压扁 */
+#book img{
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #fff !important;
+}
+
 
 
 
