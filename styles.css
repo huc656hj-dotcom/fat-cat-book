@@ -39,6 +39,7 @@ body{
   background: rgba(0,0,0,.18);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255,255,255,.06);
+  position: relative;
 }
 
 .dot{
@@ -63,6 +64,16 @@ body{
 }
 .meta .sep{ opacity: .5; padding: 0 6px; }
 .muted{ color: var(--muted); }
+
+/* tiny build mark (almost invisible) */
+.buildmark{
+  position: absolute;
+  left: 10px;
+  bottom: 4px;
+  font-size: 10px;
+  opacity: .12; /* very subtle */
+  pointer-events: none;
+}
 
 /* Stage */
 .stage{
@@ -93,13 +104,13 @@ body{
   box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
-/* IMPORTANT: keep artwork visible & centered */
+/* keep artwork visible & centered */
 #book img{
   object-fit: contain !important;
   object-position: center !important;
   background: #fff !important;
 
-  /* iOS Safari: improve crispness when PageFlip applies transforms */
+  /* iOS Safari crispness */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   backface-visibility: hidden;
@@ -107,7 +118,7 @@ body{
   transform: translateZ(0);
 }
 
-/* Arrows */
+/* Arrows - FORCE clickability above PageFlip layers */
 .nav{
   position: absolute;
   top: 50%;
@@ -124,6 +135,10 @@ body{
   cursor: pointer;
   user-select: none;
   backdrop-filter: blur(10px);
+
+  z-index: 9999;           /* key */
+  pointer-events: auto;     /* key */
+  touch-action: manipulation;
 }
 .nav-left{ left: -58px; }
 .nav-right{ right: -58px; }
