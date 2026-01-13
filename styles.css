@@ -352,6 +352,8 @@ body{
 .page.blank{
   background: #fff;
 }
+.page.blank{ background:#ff00ff !important; }
+
 
 
 
